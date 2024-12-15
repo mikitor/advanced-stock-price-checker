@@ -23,15 +23,20 @@ export class StockService {
     private readonly stockMarketApiService: StockMarketApiService,
   ) {}
 
-  async getStock(symbol: string) {
+  async getStock(stock: string) {
+    // Convert the stock symbol to uppercase
+    const stockSymbol = stock.toUpperCase();
+
     const stocks = await this.stockRepository.find({
-      where: { symbol },
+      where: { symbol: stockSymbol },
       order: { createdAt: 'DESC' },
       take: 10,
     });
 
     if (!stocks.length) {
-      throw new NotFoundException(`No stock data found for symbol: ${symbol}`);
+      throw new NotFoundException(
+        `No stock data found for symbol: ${stockSymbol}`,
+      );
     }
 
     const latestStockInformation = stocks[stocks.length - 1];
@@ -51,31 +56,37 @@ export class StockService {
   }
 
   startScheduledChecker(symbol: string) {
-    this.schedulerService.start(symbol, async () => {
+    // Convert the stock symbol to uppercase
+    const stockSymbol = symbol.toUpperCase();
+
+    this.schedulerService.start(stockSymbol, async () => {
       try {
         const response =
-          await this.stockMarketApiService.getLatestStockPrice(symbol);
+          await this.stockMarketApiService.getLatestStockPrice(stockSymbol);
         const price = response.c;
 
         if (!price) {
-          this.schedulerService.stop(symbol);
-          throw new BadRequestException(`Invalid symbol: ${symbol}`);
+          this.schedulerService.stop(stockSymbol);
+          throw new BadRequestException(`Invalid stockSymbol: ${stockSymbol}`);
         }
 
-        const stock = this.stockRepository.create({ symbol, price });
+        const stock = this.stockRepository.create({
+          symbol: stockSymbol,
+          price,
+        });
         await this.stockRepository.save(stock);
 
-        this.logger.log(`Fetched and saved price for ${symbol}: ${price}`);
+        this.logger.log(`Fetched and saved price for ${stockSymbol}: ${price}`);
       } catch (error) {
         this.logger.error(
-          `Error fetching data for ${symbol}: ${error.message}`,
+          `Error fetching data for ${stockSymbol}: ${error.message}`,
         );
 
         if (error instanceof BadRequestException) {
           throw error;
         } else {
           throw new InternalServerErrorException(
-            `Error fetching data for ${symbol}`,
+            `Error fetching data for ${stockSymbol}`,
           );
         }
       }
