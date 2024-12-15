@@ -52,7 +52,10 @@ export class StockService {
       (totalPrice, currentPrice) => totalPrice + currentPrice,
       0,
     );
-    return totalPrice / prices.length;
+    const average = totalPrice / prices.length;
+
+    // Round to 2 decimal places
+    return parseFloat(average.toFixed(2));
   }
 
   startScheduledChecker(symbol: string) {
