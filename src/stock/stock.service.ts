@@ -39,7 +39,7 @@ export class StockService {
       );
     }
 
-    const latestStockInformation = stocks[stocks.length - 1];
+    const latestStockInformation = stocks[0];
 
     const last10StockPrices = stocks.map((stock) => stock.price);
     const movingAverage = this.calculateMovingAverage(last10StockPrices);
