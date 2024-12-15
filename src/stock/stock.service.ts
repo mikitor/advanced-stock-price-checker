@@ -58,7 +58,8 @@ export class StockService {
         const price = response.c;
 
         if (!price) {
-          throw new Error(`Invalid price data received for symbol: ${symbol}`);
+          this.schedulerService.stop(symbol);
+          throw new BadRequestException(`Invalid symbol: ${symbol}`);
         }
 
         const stock = this.stockRepository.create({ symbol, price });
